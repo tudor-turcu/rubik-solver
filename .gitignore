@@ -309,3 +309,6 @@ __pycache__/
 
 # OpenCover UI analysis results
 OpenCover/
+/RubikCubeSolver/tools/Addins/cake.putty/Cake.Core/lib
+/RubikCubeSolver/tools/Addins/cake.putty/Cake.Putty/lib/net45
+/RubikCubeSolver/tools/Cake
