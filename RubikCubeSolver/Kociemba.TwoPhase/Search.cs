@@ -2,6 +2,7 @@
  * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm
  */
 using System;
+using RubikCubeSolver.Kociemba.TwoPhase.Exceptions;
 
 namespace RubikCubeSolver.Kociemba.TwoPhase
 {
@@ -149,7 +150,7 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
          *          determines if a " . " separates the phase1 and phase2 parts of the solver string like in F' R B R L2 F .
          *          U2 U D for example.<br>
          * @return The solution string or an error code:<br>
-         *         Error 1: There is not exactly one facelet of each colour<br>
+         *         Error 1: NotOneFaceletOfEachColorException: There is not exactly one facelet of each colour<br>
          *         Error 2: Not all 12 edges exist exactly once<br>
          *         Error 3: Flip error: One edge has to be flipped<br>
          *         Error 4: Not all corners exist exactly once<br>
@@ -167,21 +168,21 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
             try
             {
                 for (int i = 0; i < 54; i++)
-                    count[Enum.Parse<Color>(facelets.Substring(i, i + 1)).Ordinal()]++;
+                    count[Enum.Parse<Color>(facelets.Substring(i, 1)).Ordinal()]++;
             }
             catch (Exception)
             {
-                return "Error 1";
+                throw new NotOneFaceletOfEachColorException();
             }
 
             for (int i = 0; i < 6; i++)
                 if (count[i] != 9)
-                    return "Error 1";
+                    throw new NotOneFaceletOfEachColorException();
 
             FaceCube fc = new FaceCube(facelets);
             CubieCube cc = fc.ToCubieCube();
-            if ((s = cc.Verify()) != 0)
-                return "Error " + Math.Abs(s);
+
+            cc.Validate();
 
             // +++++++++++++++++++++++ initialization +++++++++++++++++++++++++++++++++
             CoordCube c = new CoordCube(cc);

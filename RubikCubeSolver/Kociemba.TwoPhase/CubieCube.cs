@@ -2,6 +2,7 @@
  * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm
  */
 using System;
+using RubikCubeSolver.Kociemba.TwoPhase.Exceptions;
 using static RubikCubeSolver.Kociemba.TwoPhase.Corner;
 using static RubikCubeSolver.Kociemba.TwoPhase.Edge;
 
@@ -813,15 +814,15 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
                 EP[j] = perm[x--];
         }
 
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        // Check a cubiecube for solvability. Return the error code.
-        // 0: Cube is solvable
-        // -2: Not all 12 edges exist exactly once
-        // -3: Flip error: One edge has to be flipped
-        // -4: Not all corners exist exactly once
-        // -5: Twist error: One corner has to be twisted
-        // -6: Parity error: Two corners ore two edges have to be exchanged
-        public int Verify()
+        /// <summary>
+        /// Check a cubiecube for solvability. Throws an expection if invalid
+        /// </summary>
+        /// <exception cref="DuplicateEdgesException">-2: Not all 12 edges exist exactly once</exception>
+        /// <exception cref="FlipErrorException">-3: Flip error: One edge has to be flipped</exception>
+        /// <exception cref="DuplicateCornersException">-4: Not all corners exist exactly once</exception>
+        /// <exception cref="TwistedCornerException">-5: Twist error: One corner has to be twisted</exception>
+        /// <exception cref="ParityException">-6: Parity error: Two corners ore two edges have to be exchanged</exception>
+        public void Validate()
         {
             int sum = 0;
             int[] edgeCount = new int[12];
@@ -831,12 +832,13 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
 
             for (int i = 0; i < 12; i++)
                 if (edgeCount[i] != 1)
-                    return -2;
+                    throw new DuplicateEdgesException();
 
             for (int i = 0; i < 12; i++)
                 sum += EO[i];
+
             if (sum % 2 != 0)
-                return -3;
+                throw new FlipErrorException();
 
             int[] cornerCount = new int[8];
             foreach (Corner c in Enum.GetValues(typeof(Corner)))
@@ -844,18 +846,19 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
 
             for (int i = 0; i < 8; i++)
                 if (cornerCount[i] != 1)
-                    return -4;// missing corners
+                    throw new DuplicateCornersException(); // duplicate/missing corners
 
             sum = 0;
             for (int i = 0; i < 8; i++)
                 sum += CO[i];
+
             if (sum % 3 != 0)
-                return -5;// twisted corner
+                throw new TwistedCornerException(); // twisted corner
 
             if ((EdgeParity() ^ CornerParity()) != 0)
-                return -6;// parity error
+                throw new ParityException(); // parity error
 
-            return 0;// cube ok
+            // cube ok
         }
     }
 

@@ -47,7 +47,7 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
         {
             string s = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
             for (int i = 0; i < 54; i++)
-                F[i] = Enum.Parse<Color>(s.Substring(i, i + 1));
+                F[i] = Enum.Parse<Color>(s.Substring(i, 1));
         }
 
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -55,7 +55,7 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
         public FaceCube(string cubeString)
         {
             for (int i = 0; i < cubeString.Length; i++)
-                F[i] = Enum.Parse<Color>(cubeString.Substring(i, i + 1));
+                F[i] = Enum.Parse<Color>(cubeString.Substring(i, 1));
         }
 
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

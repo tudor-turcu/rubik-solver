@@ -2,14 +2,36 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+	<RuntimeFrameworkVersion>2.0.3</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="TestData\ValidCube1.txt" />
+    <None Remove="TestData\InvalidCubeDuplicateCorners.txt" />
+    <None Remove="TestData\InvalidCubeFlipError.txt" />
+    <None Remove="TestData\InvalidCubeParityError.txt" />
+    <None Remove="TestData\InvalidCubeTwistedCorner.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="TestData\ValidCube1.txt">
+    <Content Include="TestData\InvalidCubeDuplicateCorners.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\InvalidCubeFlipError.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\InvalidCubeParityError.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\InvalidCubeTwistedCorner.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\InvalidCubeWrongColorNumbers.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\InvalidCubeDuplicateEdge.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\ValidSolvedCube.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

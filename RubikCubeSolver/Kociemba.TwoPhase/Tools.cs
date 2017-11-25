@@ -2,6 +2,7 @@
  * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm
  */
 using System;
+using RubikCubeSolver.Kociemba.TwoPhase.Exceptions;
 
 namespace RubikCubeSolver.Kociemba.TwoPhase
 {
@@ -32,27 +33,27 @@ public class Tools
      *         -6: Parity error: Two corners or two edges have to be exchanged
      */
      
-    public static int Verify(string s)
+    public static void Verify(string s)
     {
         int[] count = new int[6];
         try
         {
             for (int i = 0; i < 54; i++)
-                count[Enum.Parse<Color>(s.Substring(i, i + 1)).Ordinal()]++;
+                count[Enum.Parse<Color>(s.Substring(i, 1)).Ordinal()]++;
         }
         catch (Exception)
         {
-            return -1;
+            throw new NotOneFaceletOfEachColorException();
         }
 
         for (int i = 0; i < 6; i++)
             if (count[i] != 9)
-                return -1;
+                throw new NotOneFaceletOfEachColorException();
 
         FaceCube fc = new FaceCube(s);
         CubieCube cc = fc.ToCubieCube();
 
-        return cc.Verify();
+        cc.Validate();
     }
 
     /**
