@@ -10,6 +10,7 @@
     <None Remove="TestData\InvalidCubeFlipError.txt" />
     <None Remove="TestData\InvalidCubeParityError.txt" />
     <None Remove="TestData\InvalidCubeTwistedCorner.txt" />
+    <None Remove="TestData\ValidScrambledCube1.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,9 @@
     <Content Include="TestData\InvalidCubeDuplicateEdge.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestData\ValidScrambledCube1.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="TestData\ValidSolvedCube.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -49,6 +53,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RubikCubeSolver\RubikCubeSolver.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="RubikCubeSolvingTests.cs">
+      <SubType>Component</SubType>
+    </Compile>
   </ItemGroup>
 
 </Project>

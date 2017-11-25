@@ -2,6 +2,7 @@
  * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm
  */
 using System;
+using System.Diagnostics;
 using RubikCubeSolver.Kociemba.TwoPhase.Exceptions;
 
 namespace RubikCubeSolver.Kociemba.TwoPhase
@@ -202,87 +203,102 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
             int n = 0;
             bool busy = false;
             int depthPhase1 = 1;
-
-            long tStart = CurrentTimeMillis();
-
-            // +++++++++++++++++++ Main loop ++++++++++++++++++++++++++++++++++++++++++
-            do
+            
+            Stopwatch stopWatch = new Stopwatch();
+            
+            try
             {
+                stopWatch.Start();
+
+                // +++++++++++++++++++ Main loop ++++++++++++++++++++++++++++++++++++++++++
                 do
                 {
-                    if ((depthPhase1 - n > minDistPhase1[n + 1]) && !busy)
+                    do
                     {
-
-                        if (ax[n] == 0 || ax[n] == 3)// Initialize next move
-                            ax[++n] = 1;
-                        else
-                            ax[++n] = 0;
-                        po[n] = 1;
-                    }
-                    else if (++po[n] > 3)
-                    {
-                        do
+                        if ((depthPhase1 - n > minDistPhase1[n + 1]) && !busy)
                         {
-                            // increment axis
-                            if (++ax[n] > 5)
+
+                            if (ax[n] == 0 || ax[n] == 3) // Initialize next move
+                                ax[++n] = 1;
+                            else
+                                ax[++n] = 0;
+                            po[n] = 1;
+                        }
+                        else if (++po[n] > 3)
+                        {
+                            do
                             {
-
-                                if (CurrentTimeMillis() - tStart > timeOut << 10)
-                                    return "Error 8";
-
-                                if (n == 0)
+                                // increment axis
+                                if (++ax[n] > 5)
                                 {
-                                    if (depthPhase1 >= maxDepth)
-                                        return "Error 7";
 
-                                    depthPhase1++;
-                                    ax[n] = 0;
-                                    po[n] = 1;
-                                    busy = false;
-                                    break;
+                                    stopWatch.Stop();
+                                    if (stopWatch.ElapsedMilliseconds > timeOut * 1000)
+                                        return "Error 8";
+                                    stopWatch.Start();
+
+                                    if (n == 0)
+                                    {
+                                        if (depthPhase1 >= maxDepth)
+                                            return "Error 7";
+
+                                        depthPhase1++;
+                                        ax[n] = 0;
+                                        po[n] = 1;
+                                        busy = false;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        n--;
+                                        busy = true;
+                                        break;
+                                    }
+
                                 }
                                 else
                                 {
-                                    n--;
-                                    busy = true;
-                                    break;
+                                    po[n] = 1;
+                                    busy = false;
                                 }
+                            } while (n != 0 && (ax[n - 1] == ax[n] || ax[n - 1] - 3 == ax[n]));
+                        }
+                        else
+                            busy = false;
+                    } while (busy);
 
-                            }
-                            else
-                            {
-                                po[n] = 1;
-                                busy = false;
-                            }
-                        } while (n != 0 && (ax[n - 1] == ax[n] || ax[n - 1] - 3 == ax[n]));
-                    }
-                    else
-                        busy = false;
-                } while (busy);
+                    // +++++++++++++ compute new coordinates and new minDistPhase1 ++++++++++
+                    // if minDistPhase1 =0, the H subgroup is reached
+                    var mv = 3 * ax[n] + po[n] - 1;
+                    flip[n + 1] = CoordCube.FlipMove[flip[n], mv];
+                    twist[n + 1] = CoordCube.TwistMove[twist[n], mv];
+                    slice[n + 1] = CoordCube.FRtoBR_Move[slice[n] * 24, mv] / 24;
+                    minDistPhase1[n + 1] = Math.Max(CoordCube.GetPruning(CoordCube.Slice_Flip_Prun,
+                        CoordCube.N_SLICE1 * flip[n + 1]
+                        + slice[n + 1]), CoordCube.GetPruning(CoordCube.Slice_Twist_Prun,
+                        CoordCube.N_SLICE1 * twist[n + 1]
+                        + slice[n + 1]));
+                    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-                // +++++++++++++ compute new coordinates and new minDistPhase1 ++++++++++
-                // if minDistPhase1 =0, the H subgroup is reached
-                var mv = 3 * ax[n] + po[n] - 1;
-                flip[n + 1] = CoordCube.FlipMove[flip[n], mv];
-                twist[n + 1] = CoordCube.TwistMove[twist[n], mv];
-                slice[n + 1] = CoordCube.FRtoBR_Move[slice[n] * 24, mv] / 24;
-                minDistPhase1[n + 1] = Math.Max(CoordCube.GetPruning(CoordCube.Slice_Flip_Prun, CoordCube.N_SLICE1 * flip[n + 1]
-                                                                + slice[n + 1]), CoordCube.GetPruning(CoordCube.Slice_Twist_Prun, CoordCube.N_SLICE1 * twist[n + 1]
-                                                                                                                                    + slice[n + 1]));
-                // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-                if (minDistPhase1[n + 1] == 0 && n >= depthPhase1 - 5)
-                {
-                    minDistPhase1[n + 1] = 10;// instead of 10 any value >5 is possible
-                    if (n == depthPhase1 - 1 && (s = TotalDepth(depthPhase1, maxDepth)) >= 0)
+                    if (minDistPhase1[n + 1] == 0 && n >= depthPhase1 - 5)
                     {
-                        if (s == depthPhase1
-                            || (ax[depthPhase1 - 1] != ax[depthPhase1] && ax[depthPhase1 - 1] != ax[depthPhase1] + 3))
-                            return useSeparator ? SolutionToString(s, depthPhase1) : SolutionToString(s);
-                    }
+                        minDistPhase1[n + 1] = 10; // instead of 10 any value >5 is possible
+                        if (n == depthPhase1 - 1 && (s = TotalDepth(depthPhase1, maxDepth)) >= 0)
+                        {
+                            if (s == depthPhase1
+                                || (ax[depthPhase1 - 1] != ax[depthPhase1] &&
+                                    ax[depthPhase1 - 1] != ax[depthPhase1] + 3))
+                                return useSeparator ? SolutionToString(s, depthPhase1) : SolutionToString(s);
+                        }
 
-                }
-            } while (true);
+                    }
+                } while (true);
+
+            }
+            finally
+            {
+                stopWatch.Stop();
+            }
         }
 
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
