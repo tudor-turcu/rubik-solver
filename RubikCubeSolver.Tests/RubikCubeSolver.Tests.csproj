@@ -11,6 +11,7 @@
     <None Remove="TestData\InvalidCubeParityError.txt" />
     <None Remove="TestData\InvalidCubeTwistedCorner.txt" />
     <None Remove="TestData\ValidScrambledCube1.txt" />
+    <None Remove="TestData\ValidScrambledCube2.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +34,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TestData\ValidScrambledCube1.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\ValidCubeRight90.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\ValidScrambledCube2.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TestData\ValidSolvedCube.txt">

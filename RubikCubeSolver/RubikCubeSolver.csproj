@@ -6,4 +6,25 @@
     <RuntimeIdentifiers>win10-arm;ubuntu.16.04-arm;linux-arm</RuntimeIdentifiers>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="ScrambledCube1.txt" />
+    <None Remove="ScrambledCube2.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ScrambledCube1.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ScrambledCube2.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+
 </Project>

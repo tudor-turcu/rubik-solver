@@ -1,5 +1,5 @@
 ﻿/*
- * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm
+ * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm - C# port of the original Java code
  */
 using System;
 using RubikCubeSolver.Kociemba.TwoPhase.Exceptions;
@@ -64,12 +64,12 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
         {
             CubieCube cc = new CubieCube();
             Random gen = new Random();
-            cc.SetFlip((short)gen.Next(CoordCube.N_FLIP));
-            cc.SetTwist((short)gen.Next(CoordCube.N_TWIST));
+            cc.SetFlip((short)gen.Next(MoveTables.N_FLIP));
+            cc.SetTwist((short)gen.Next(MoveTables.N_TWIST));
             do
             {
-                cc.SetUrFtoDlb(gen.Next(CoordCube.N_URFtoDLB));
-                cc.SetURtoBr(gen.Next(CoordCube.N_URtoBR));
+                cc.SetUrFtoDlb(gen.Next(MoveTables.N_URFtoDLB));
+                cc.SetURtoBr(gen.Next(MoveTables.N_URtoBR));
             } while ((cc.EdgeParity() ^ cc.CornerParity()) != 0);
             FaceCube fc = cc.ToFaceCube();
             return fc.ToString();

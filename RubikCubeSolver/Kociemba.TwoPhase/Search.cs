@@ -1,8 +1,12 @@
 ﻿/*
- * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm
+ * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm - C# port of the original Java code
  */
 using System;
 using System.Diagnostics;
+using System.IO;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using RubikCubeSolver.Kociemba.TwoPhase.Exceptions;
 
 namespace RubikCubeSolver.Kociemba.TwoPhase
@@ -29,8 +33,14 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
         private static readonly int[] minDistPhase1 = new int[31]; // IDA* distance do goal estimations
         private static readonly int[] minDistPhase2 = new int[31];
 
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        // generate the solution string from the array data
+        private static MoveTables MoveTables;
+        private static readonly ILogger Logger = ApplicationLogging.CreateLogger<Search>();
+        
+        /// <summary>
+        /// generate the solution string from the array data.
+        /// </summary>
+        /// <param name="length">The length.</param>
+        /// <returns></returns>
         private static string SolutionToString(int length)
         {
             string s = "";
@@ -75,8 +85,12 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
             return s;
         }
 
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        // generate the solution string from the array data including a separator between phase1 and phase2 moves
+        /// <summary>
+        ///  generate the solution string from the array data including a separator between phase1 and phase2 moves.
+        /// </summary>
+        /// <param name="length">The length.</param>
+        /// <param name="depthPhase1">The depth phase1.</param>
+        /// <returns></returns>
         private static string SolutionToString(int length, int depthPhase1)
         {
             string s = "";
@@ -123,46 +137,31 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
             }
             return s;
         }
-
-        private static readonly DateTime Jan1St1970 = new DateTime
-            (1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        public static long CurrentTimeMillis()
-        {
-            return (long)(DateTime.UtcNow - Jan1St1970).TotalMilliseconds;
-        }
-
-        /**
-         * Computes the solver string for a given cube.
-         * 
-         * @param facelets
-         *          is the cube definition string, see {@link Facelet} for the format.
-         * 
-         * @param maxDepth
-         *          defines the maximal allowed maneuver length. For random cubes, a maxDepth of 21 usually will return a
-         *          solution in less than 0.5 seconds. With a maxDepth of 20 it takes a few seconds on average to find a
-         *          solution, but it may take much longer for specific cubes.
-         * 
-         *@param timeOut
-         *          defines the maximum computing time of the method in seconds. If it does not return with a solution, it returns with
-         *          an error code.
-         * 
-         * @param useSeparator
-         *          determines if a " . " separates the phase1 and phase2 parts of the solver string like in F' R B R L2 F .
-         *          U2 U D for example.<br>
-         * @return The solution string or an error code:<br>
-         *         Error 1: NotOneFaceletOfEachColorException: There is not exactly one facelet of each colour<br>
-         *         Error 2: Not all 12 edges exist exactly once<br>
-         *         Error 3: Flip error: One edge has to be flipped<br>
-         *         Error 4: Not all corners exist exactly once<br>
-         *         Error 5: Twist error: One corner has to be twisted<br>
-         *         Error 6: Parity error: Two corners or two edges have to be exchanged<br>
-         *         Error 7: No solution exists for the given maxDepth<br>
-         *         Error 8: Timeout, no solution within given time
-         */
+        
+        /// <summary>
+        /// Computes the solver string for a given cube.
+        /// </summary>
+        /// <param name="facelets">is the cube definition string, see {@link Facelet} for the format..</param>
+        /// <param name="maxDepth">defines the maximal allowed maneuver length. For random cubes, a maxDepth of 21 usually will return a
+        ///          solution in less than 0.5 seconds.With a maxDepth of 20 it takes a few seconds on average to find a
+        ///          solution, but it may take much longer for specific cubes..</param>
+        /// <param name="timeOut">defines the maximum computing time of the method in seconds. If it does not return with a solution, it returns with
+        ///          an error code..</param>
+        /// <param name="useSeparator">determines if a " . " separates the phase1 and phase2 parts of the solver string like in F' R B R L2 F .
+        ///          U2 U D for example..</param>
+        /// <returns>The solution string or an error code:
+        ///    Error 1: NotOneFaceletOfEachColorException: There is not exactly one facelet of each colour
+        ///    
+        ///    Error 7: No solution exists for the given maxDepth
+        ///    Error 8: Timeout, no solution within given time</returns>
+        /// <exception cref="DuplicateEdgesException">-2: Not all 12 edges exist exactly once</exception>
+        /// <exception cref="FlipErrorException">-3: Flip error: One edge has to be flipped</exception>
+        /// <exception cref="DuplicateCornersException">-4: Not all corners exist exactly once</exception>
+        /// <exception cref="TwistedCornerException">-5: Twist error: One corner has to be twisted</exception>
+        /// <exception cref="ParityException">-6: Parity error: Two corners ore two edges have to be exchanged</exception>
         public static string Solution(string facelets, int maxDepth, long timeOut, bool useSeparator)
         {
-            int s;
+            Logger.LogDebug("Validating the cube ...");
 
             // +++++++++++++++++++++check for wrong input +++++++++++++++++++++++++++++
             int[] count = new int[6];
@@ -184,6 +183,9 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
             CubieCube cc = fc.ToCubieCube();
 
             cc.Validate();
+
+            // create or load the move tables
+            MoveTables = LoadMoveTables();
 
             // +++++++++++++++++++++++ initialization +++++++++++++++++++++++++++++++++
             CoordCube c = new CoordCube(cc);
@@ -270,19 +272,20 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
                     // +++++++++++++ compute new coordinates and new minDistPhase1 ++++++++++
                     // if minDistPhase1 =0, the H subgroup is reached
                     var mv = 3 * ax[n] + po[n] - 1;
-                    flip[n + 1] = CoordCube.FlipMove[flip[n], mv];
-                    twist[n + 1] = CoordCube.TwistMove[twist[n], mv];
-                    slice[n + 1] = CoordCube.FRtoBR_Move[slice[n] * 24, mv] / 24;
-                    minDistPhase1[n + 1] = Math.Max(CoordCube.GetPruning(CoordCube.Slice_Flip_Prun,
-                        CoordCube.N_SLICE1 * flip[n + 1]
-                        + slice[n + 1]), CoordCube.GetPruning(CoordCube.Slice_Twist_Prun,
-                        CoordCube.N_SLICE1 * twist[n + 1]
+                    flip[n + 1] = MoveTables.FlipMove[flip[n], mv];
+                    twist[n + 1] = MoveTables.TwistMove[twist[n], mv];
+                    slice[n + 1] = MoveTables.FRtoBR_Move[slice[n] * 24, mv] / 24;
+                    minDistPhase1[n + 1] = Math.Max(MoveTables.GetPruning(MoveTables.Slice_Flip_Prun,
+                        MoveTables.N_SLICE1 * flip[n + 1]
+                        + slice[n + 1]), MoveTables.GetPruning(MoveTables.Slice_Twist_Prun,
+                        MoveTables.N_SLICE1 * twist[n + 1]
                         + slice[n + 1]));
                     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
                     if (minDistPhase1[n + 1] == 0 && n >= depthPhase1 - 5)
                     {
                         minDistPhase1[n + 1] = 10; // instead of 10 any value >5 is possible
+                        int s;
                         if (n == depthPhase1 - 1 && (s = TotalDepth(depthPhase1, maxDepth)) >= 0)
                         {
                             if (s == depthPhase1
@@ -301,6 +304,66 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
             }
         }
 
+        private static MoveTables LoadMoveTables()
+        {
+            string cacheFile = GetCacheFilePath();
+
+            if (File.Exists(cacheFile))
+            {
+                return RestoreTablesFromFile(cacheFile);
+            }
+
+            MoveTables moveTables = new MoveTables();
+            moveTables.Build();
+            SaveTablesToFile(moveTables, cacheFile);
+            return moveTables;
+        }
+
+        private static MoveTables RestoreTablesFromFile(string cacheFile)
+        {
+            Logger.LogDebug($"Loading the move tables from {cacheFile}  ...");
+
+            Stopwatch stopWatch = new Stopwatch();
+
+            stopWatch.Start();
+
+            JsonSerializer serializer = new JsonSerializer {NullValueHandling = NullValueHandling.Ignore};
+
+            using (StreamReader sw = new StreamReader(cacheFile))
+            using (JsonReader reader = new JsonTextReader(sw))
+            {
+                MoveTables moveTables = serializer.Deserialize<MoveTables>(reader);
+
+                stopWatch.Stop();
+
+                Logger.LogDebug($"Move tables loaded in {stopWatch.Elapsed.TotalSeconds}s");
+
+                return moveTables;
+            }
+        }
+
+        private static void SaveTablesToFile(MoveTables moveTables, string cacheFile)
+        {
+            JsonSerializer serializer = new JsonSerializer();
+            serializer.Converters.Add(new JavaScriptDateTimeConverter());
+            serializer.NullValueHandling = NullValueHandling.Ignore;
+            
+            Logger.LogDebug($"Saving the move tables to {cacheFile}  ...");
+
+            using (StreamWriter sw = new StreamWriter(cacheFile))
+            using (JsonWriter writer = new JsonTextWriter(sw))
+            {
+                serializer.Serialize(writer, moveTables);
+            }
+        }
+
+        private static string GetCacheFilePath()
+        {
+            string cachePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string cacheFile = Path.Combine(cachePath, "RubikMoveTablesCache.json");
+            return cacheFile;
+        }
+
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         // Apply phase2 of algorithm and return the combined phase1 and phase2 depth. In phase2, only the moves
         // U,D,R2,F2,L2 and B2 are allowed.
@@ -311,25 +374,25 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
             for (int i = 0; i < depthPhase1; i++)
             {
                 mv = 3 * ax[i] + po[i] - 1;
-                URFtoDLF[i + 1] = CoordCube.URFtoDLF_Move[URFtoDLF[i], mv];
-                FRtoBR[i + 1] = CoordCube.FRtoBR_Move[FRtoBR[i], mv];
-                parity[i + 1] = CoordCube.ParityMove[parity[i], mv];
+                URFtoDLF[i + 1] = MoveTables.URFtoDLF_Move[URFtoDLF[i], mv];
+                FRtoBR[i + 1] = MoveTables.FRtoBR_Move[FRtoBR[i], mv];
+                parity[i + 1] = MoveTables.ParityMove[parity[i], mv];
             }
 
-            if ((d1 = CoordCube.GetPruning(CoordCube.Slice_URFtoDLF_Parity_Prun,
-                    (CoordCube.N_SLICE2 * URFtoDLF[depthPhase1] + FRtoBR[depthPhase1]) * 2 + parity[depthPhase1])) > maxDepthPhase2)
+            if ((d1 = MoveTables.GetPruning(MoveTables.Slice_URFtoDLF_Parity_Prun,
+                    (MoveTables.N_SLICE2 * URFtoDLF[depthPhase1] + FRtoBR[depthPhase1]) * 2 + parity[depthPhase1])) > maxDepthPhase2)
                 return -1;
 
             for (int i = 0; i < depthPhase1; i++)
             {
                 mv = 3 * ax[i] + po[i] - 1;
-                URtoUL[i + 1] = CoordCube.URtoUL_Move[URtoUL[i], mv];
-                UBtoDF[i + 1] = CoordCube.UBtoDF_Move[UBtoDF[i], mv];
+                URtoUL[i + 1] = MoveTables.URtoUL_Move[URtoUL[i], mv];
+                UBtoDF[i + 1] = MoveTables.UBtoDF_Move[UBtoDF[i], mv];
             }
-            URtoDF[depthPhase1] = CoordCube.MergeURtoULandUBtoDF[URtoUL[depthPhase1], UBtoDF[depthPhase1]];
+            URtoDF[depthPhase1] = MoveTables.MergeURtoULandUBtoDF[URtoUL[depthPhase1], UBtoDF[depthPhase1]];
 
-            if ((d2 = CoordCube.GetPruning(CoordCube.Slice_URtoDF_Parity_Prun,
-                    (CoordCube.N_SLICE2 * URtoDF[depthPhase1] + FRtoBR[depthPhase1]) * 2 + parity[depthPhase1])) > maxDepthPhase2)
+            if ((d2 = MoveTables.GetPruning(MoveTables.Slice_URtoDF_Parity_Prun,
+                    (MoveTables.N_SLICE2 * URtoDF[depthPhase1] + FRtoBR[depthPhase1]) * 2 + parity[depthPhase1])) > maxDepthPhase2)
                 return -1;
 
             if ((minDistPhase2[depthPhase1] = Math.Max(d1, d2)) == 0)// already solved
@@ -407,14 +470,14 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
                 // +++++++++++++ compute new coordinates and new minDist ++++++++++
                 mv = 3 * ax[n] + po[n] - 1;
 
-                URFtoDLF[n + 1] = CoordCube.URFtoDLF_Move[URFtoDLF[n], mv];
-                FRtoBR[n + 1] = CoordCube.FRtoBR_Move[FRtoBR[n], mv];
-                parity[n + 1] = CoordCube.ParityMove[parity[n], mv];
-                URtoDF[n + 1] = CoordCube.URtoDF_Move[URtoDF[n], mv];
+                URFtoDLF[n + 1] = MoveTables.URFtoDLF_Move[URFtoDLF[n], mv];
+                FRtoBR[n + 1] = MoveTables.FRtoBR_Move[FRtoBR[n], mv];
+                parity[n + 1] = MoveTables.ParityMove[parity[n], mv];
+                URtoDF[n + 1] = MoveTables.URtoDF_Move[URtoDF[n], mv];
 
-                minDistPhase2[n + 1] = Math.Max(CoordCube.GetPruning(CoordCube.Slice_URtoDF_Parity_Prun, (CoordCube.N_SLICE2
+                minDistPhase2[n + 1] = Math.Max(MoveTables.GetPruning(MoveTables.Slice_URtoDF_Parity_Prun, (MoveTables.N_SLICE2
                                                                 * URtoDF[n + 1] + FRtoBR[n + 1])
-                                                                * 2 + parity[n + 1]), CoordCube.GetPruning(CoordCube.Slice_URFtoDLF_Parity_Prun, (CoordCube.N_SLICE2
+                                                                * 2 + parity[n + 1]), MoveTables.GetPruning(MoveTables.Slice_URFtoDLF_Parity_Prun, (MoveTables.N_SLICE2
                                                                         * URFtoDLF[n + 1] + FRtoBR[n + 1])
                                                                         * 2 + parity[n + 1]));
                 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

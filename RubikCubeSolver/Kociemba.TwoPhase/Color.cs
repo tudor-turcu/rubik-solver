@@ -1,5 +1,5 @@
 ﻿/*
- * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm
+ * Herbert Kociemba Rubik's cube algorithm: http://kociemba.org/cube.htm - C# port of the original Java code
  */
 namespace RubikCubeSolver.Kociemba.TwoPhase
 {
