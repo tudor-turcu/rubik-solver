@@ -24,9 +24,11 @@ namespace rubikcubesolver
                 Environment.Exit(2);
             }
 
-            logger.LogDebug("Reading the input file..");
+            //logger.LogDebug("Reading the input file..");
 
             string cubePermutation = File.ReadAllText(filePath);
+
+            Tools.PrettyPrintCube(cubePermutation);
 
             const int maxTime = 5;
             const int maxDepth = 21;

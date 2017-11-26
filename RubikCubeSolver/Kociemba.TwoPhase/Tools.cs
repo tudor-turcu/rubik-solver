@@ -79,6 +79,69 @@ namespace RubikCubeSolver.Kociemba.TwoPhase
         {
             return textPermutation.Replace(" ", string.Empty).Replace(Environment.NewLine, string.Empty);
         }
+
+        public static void PrettyPrintCube(string textPermutation)
+        {
+            string configuration = RemoveWhiteSpace(textPermutation);
+            
+            Console.WriteLine("\n\r-----------------");
+            ConsoleColor currentBackground = Console.BackgroundColor;
+            ConsoleColor currentForeground = Console.ForegroundColor;
+
+            for (var i = 0; i < configuration.Length; i++)
+            {
+                char f = configuration[i];
+
+                if (i % 3 == 0)
+                {
+                    Console.WriteLine();
+                }
+
+                if (i % 9 == 0)
+                {
+                    Console.WriteLine();
+                }
+
+                PrintFacet(f);
+            }
+
+            Console.ResetColor();
+
+            Console.WriteLine("\n\r-----------------");
+        }
+
+        private static void PrintFacet(char f)
+        {
+            Console.ForegroundColor = ConsoleColor.Black;
+            switch (f)
+            {
+                case 'F':
+                    Console.BackgroundColor = ConsoleColor.White;                    
+                    break;
+                case 'U':
+                    Console.BackgroundColor = ConsoleColor.Blue;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+                case 'R':
+                    Console.BackgroundColor = ConsoleColor.Red;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+                case 'L':
+                    Console.BackgroundColor = ConsoleColor.DarkYellow;
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    break;
+                case 'D':
+                    Console.BackgroundColor = ConsoleColor.Green;
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    break;
+                case 'B':
+                    Console.BackgroundColor = ConsoleColor.Yellow;
+                    break;
+            }
+
+            Console.Write(f);
+            Console.BackgroundColor = ConsoleColor.Black;
+        }
     }
 
 }
