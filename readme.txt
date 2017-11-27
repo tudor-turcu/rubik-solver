@@ -1,3 +1,5 @@
+C# / .NET Core port of Herbert Kociemba (http://kociemba.org/cube.htm) original implementaton (in Java): http://kociemba.org/downloads/twophase.jar
+-------------
 Get the latest Cake build.ps1 by opening a powershell script, change the working directory to this one, and run:
 
 Invoke-WebRequest http://cakebuild.net/download/bootstrapper/windows -OutFile build.ps1
